@@ -30,11 +30,11 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
-				neon: {
-					lime: '#C6FF3D',
-					magenta: '#FF2E9A',
-					cyan: '#00E5FF',
-					violet: '#7B2CFF',
+				brand: {
+					sky: '#38BDF8',
+					cyan: '#22D3EE',
+					blue: '#2563EB',
+					deep: '#0B1220',
 				},
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
@@ -98,8 +98,12 @@ export default {
 					'50%': { transform: 'translateY(-12px)' }
 				},
 				'pulse-glow': {
-					'0%, 100%': { boxShadow: '0 0 20px rgba(198, 255, 61, 0.4), 0 0 40px rgba(198, 255, 61, 0.2)' },
-					'50%': { boxShadow: '0 0 30px rgba(198, 255, 61, 0.7), 0 0 60px rgba(198, 255, 61, 0.4)' }
+					'0%, 100%': { boxShadow: '0 0 20px rgba(56, 189, 248, 0.5), 0 0 40px rgba(37, 99, 235, 0.25)' },
+					'50%': { boxShadow: '0 0 30px rgba(56, 189, 248, 0.8), 0 0 60px rgba(37, 99, 235, 0.45)' }
+				},
+				'dig': {
+					'0%, 100%': { transform: 'rotate(-8deg)' },
+					'50%': { transform: 'rotate(12deg)' }
 				},
 				'grid-move': {
 					'0%': { backgroundPosition: '0 0' },
@@ -123,6 +127,7 @@ export default {
 				'grid-move': 'grid-move 8s linear infinite',
 				'blink': 'blink 1.6s ease-in-out infinite',
 				'marquee': 'marquee 30s linear infinite',
+				'dig': 'dig 1.8s ease-in-out infinite',
 			}
 		}
 	},
