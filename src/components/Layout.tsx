@@ -2,10 +2,12 @@ import { Link, useLocation } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { ReactNode } from 'react';
+import { SERVER_IP } from '@/lib/api';
+import { toast } from 'sonner';
 
 const NAV = [
   { to: '/', label: 'Главная' },
-  { to: '/#shop', label: 'Магазин' },
+  { to: '/shop', label: 'Магазин' },
   { to: '/#status', label: 'Статус' },
   { to: '/rules', label: 'Правила' },
   { to: '/offer', label: 'Оферта' },
@@ -25,7 +27,8 @@ const Layout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
 
   const copyIP = () => {
-    navigator.clipboard?.writeText('play.mineshovel.ru');
+    navigator.clipboard?.writeText(SERVER_IP);
+    toast.success(`IP ${SERVER_IP} скопирован`);
   };
 
   return (

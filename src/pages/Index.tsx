@@ -4,56 +4,40 @@ import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Layout, { ShovelLogo } from '@/components/Layout';
-
-const PRIVILEGES = [
-  {
-    name: 'DIRT',
-    price: '99₽',
-    color: 'from-slate-600 to-slate-800',
-    accent: 'text-slate-300',
-    perks: ['Цветной ник', 'Префикс [DIRT]', 'Доступ к /hat', 'Скрытие присоединения'],
-  },
-  {
-    name: 'COPPER',
-    price: '299₽',
-    color: 'from-orange-400 to-amber-700',
-    accent: 'text-amber-400',
-    perks: ['Всё из DIRT', '/fly на 5 мин раз в час', 'Приват до 30×30', '/feed и /heal', 'Кастомный префикс'],
-  },
-  {
-    name: 'SHOVEL',
-    price: '599₽',
-    color: 'from-sky-400 to-blue-600',
-    accent: 'text-brand-sky',
-    perks: ['Всё из COPPER', '/fly везде', 'Приват до 100×100', 'Обход АФК-кика', 'Эксклюзивный префикс', 'Приоритет входа'],
-    popular: true,
-  },
-  {
-    name: 'NETHERITE',
-    price: '1299₽',
-    color: 'from-cyan-300 to-blue-700',
-    accent: 'text-brand-cyan',
-    perks: ['Всё из SHOVEL', 'Безлимит приватов', '/god на 30 сек в час', 'Кастомные команды', 'Доступ к VIP-чату', 'Именной сундук на спавне'],
-  },
-];
+import BuyDialog from '@/components/BuyDialog';
+import { Product, ServerStatus, fetchProducts, fetchStatus, SERVER_IP } from '@/lib/api';
+import { toast } from 'sonner';
 
 const Index = () => {
-  const [online, setOnline] = useState(847);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [status, setStatus] = useState<ServerStatus | null>(null);
+  const [selected, setSelected] = useState<Product | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
-    const t = setInterval(() => {
-      setOnline((o) => Math.max(600, Math.min(1200, o + Math.round((Math.random() - 0.5) * 12))));
-    }, 2500);
+    fetchProducts().then(setProducts).catch(() => toast.error('Не удалось загрузить товары'));
+    fetchStatus().then(setStatus).catch(() => {});
+    const t = setInterval(() => fetchStatus().then(setStatus).catch(() => {}), 30000);
     return () => clearInterval(t);
   }, []);
 
   const copyIP = () => {
-    navigator.clipboard?.writeText('play.mineshovel.ru');
+    navigator.clipboard?.writeText(SERVER_IP);
+    toast.success(`IP ${SERVER_IP} скопирован`);
   };
+
+  const buy = (p: Product) => {
+    setSelected(p);
+    setDialogOpen(true);
+  };
+
+  const privileges = products.filter((p) => p.category === 'privilege').slice(0, 4);
+  const online = status?.players_online ?? 0;
+  const maxPlayers = status?.players_max ?? 0;
+  const isOnline = status?.online ?? false;
 
   return (
     <Layout>
-      {/* HERO */}
       <section id="home" className="relative min-h-[92vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 grid-bg animate-grid-move opacity-70" />
         <div className="absolute top-1/3 -left-40 w-[520px] h-[520px] bg-brand-blue/30 rounded-full blur-[120px]" />
@@ -62,8 +46,8 @@ const Index = () => {
         <div className="container mx-auto px-6 relative z-10 grid lg:grid-cols-12 gap-8 items-center py-20">
           <div className="lg:col-span-7 space-y-8 opacity-0 animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-brand-sky/30 bg-brand-sky/5 font-mono text-xs text-brand-sky">
-              <span className="w-2 h-2 rounded-full bg-brand-sky animate-blink" />
-              СОВРЕМЕННАЯ АНАРХИЯ · SEASON 4
+              <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-brand-sky animate-blink' : 'bg-destructive'}`} />
+              {isOnline ? 'СОВРЕМЕННАЯ АНАРХИЯ · ОНЛАЙН' : 'СЕРВЕР ОФФЛАЙН'}
             </div>
 
             <h1 className="font-display font-black text-6xl md:text-8xl leading-[0.9] tracking-tighter">
@@ -80,36 +64,36 @@ const Index = () => {
             </h1>
 
             <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
-              MineShovel — сервер современной анархии нового поколения. Минимум правил, максимум свободы.
+              MineShovel — сервер современной анархии в Minecraft. Минимум правил, максимум свободы.
               Честная экономика, стабильный онлайн, никакого p2w-беспредела.
             </p>
 
             <div className="flex flex-wrap items-center gap-4">
               <Button size="lg" onClick={copyIP} className="bg-brand-sky text-background hover:bg-brand-sky/90 font-display font-bold text-base h-14 px-8 animate-pulse-glow">
-                <Icon name="Play" size={18} className="mr-2" />
-                play.mineshovel.ru
+                <Icon name="Copy" size={18} className="mr-2" />
+                {SERVER_IP}
               </Button>
-              <a href="#shop">
+              <Link to="/shop">
                 <Button size="lg" variant="outline" className="h-14 px-8 border-brand-cyan/50 text-brand-cyan hover:bg-brand-cyan/10 font-display font-bold text-base">
                   Магазин <Icon name="ArrowRight" size={18} className="ml-2" />
                 </Button>
-              </a>
+              </Link>
             </div>
 
-            <div className="flex items-center gap-8 pt-6">
+            <div className="flex items-center gap-8 pt-6 flex-wrap">
               <div>
                 <div className="font-display font-black text-3xl text-brand-sky">{online}</div>
                 <div className="font-mono text-xs text-muted-foreground uppercase">игроков онлайн</div>
               </div>
               <div className="w-px h-12 bg-border" />
               <div>
-                <div className="font-display font-black text-3xl">1.20.4</div>
+                <div className="font-display font-black text-3xl">{status?.version?.split(' ')[0] || '1.20+'}</div>
                 <div className="font-mono text-xs text-muted-foreground uppercase">версия</div>
               </div>
               <div className="w-px h-12 bg-border" />
               <div>
-                <div className="font-display font-black text-3xl">99.8%</div>
-                <div className="font-mono text-xs text-muted-foreground uppercase">аптайм</div>
+                <div className="font-display font-black text-3xl">{maxPlayers || '∞'}</div>
+                <div className="font-mono text-xs text-muted-foreground uppercase">слотов</div>
               </div>
             </div>
           </div>
@@ -122,8 +106,8 @@ const Index = () => {
                     <div>
                       <div className="font-mono text-xs text-muted-foreground">SERVER.STATUS</div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="w-2.5 h-2.5 rounded-full bg-brand-sky animate-blink" />
-                        <span className="font-display font-bold">ONLINE</span>
+                        <span className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-brand-sky animate-blink' : 'bg-destructive'}`} />
+                        <span className="font-display font-bold">{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
                       </div>
                     </div>
                     <span className="text-brand-sky"><ShovelLogo size={24} /></span>
@@ -131,26 +115,24 @@ const Index = () => {
 
                   <div className="space-y-4">
                     <div>
-                      <div className="font-mono text-xs text-muted-foreground mb-1">PING</div>
-                      <div className="font-display font-black text-5xl text-brand-cyan">12ms</div>
+                      <div className="font-mono text-xs text-muted-foreground mb-1">ИГРОКОВ</div>
+                      <div className="font-display font-black text-5xl text-brand-cyan">{online}<span className="text-2xl text-muted-foreground">/{maxPlayers || '∞'}</span></div>
                     </div>
                     <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                      <div className="h-full w-[72%] bg-gradient-to-r from-brand-sky to-brand-cyan" />
+                      <div className="h-full bg-gradient-to-r from-brand-sky to-brand-cyan transition-all" style={{ width: maxPlayers ? `${Math.min(100, (online / maxPlayers) * 100)}%` : '0%' }} />
                     </div>
-                    <div className="grid grid-cols-3 gap-2 font-mono text-[10px] uppercase text-muted-foreground">
-                      <div><div className="text-foreground font-bold text-sm">TPS</div>20.0</div>
-                      <div><div className="text-foreground font-bold text-sm">RAM</div>72%</div>
-                      <div><div className="text-foreground font-bold text-sm">CPU</div>34%</div>
+                    <div className="font-mono text-[10px] uppercase text-muted-foreground">
+                      {SERVER_IP}
                     </div>
                   </div>
 
                   <div className="font-mono text-[10px] text-muted-foreground border-t border-border pt-3">
-                    $ last_update: 2s ago_<span className="animate-blink">▊</span>
+                    $ refresh: каждые 30s<span className="animate-blink">▊</span>
                   </div>
                 </div>
               </div>
               <div className="absolute -top-6 -right-6 bg-brand-blue text-white font-display font-black text-xs px-4 py-2 rounded-full rotate-12 glow-blue">
-                LIVE
+                {isOnline ? 'LIVE' : 'OFF'}
               </div>
             </div>
           </div>
@@ -170,27 +152,26 @@ const Index = () => {
         </div>
       </section>
 
-      {/* STATUS */}
       <section id="status" className="py-24 container mx-auto px-6">
         <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
           <div>
             <div className="font-mono text-xs text-brand-sky mb-3">// 02 — STATUS</div>
             <h2 className="font-display font-black text-5xl md:text-6xl tracking-tight">Сервер живой.<br />Всегда.</h2>
           </div>
-          <div className="font-mono text-xs text-muted-foreground">Данные обновляются каждые 30 секунд</div>
+          <div className="font-mono text-xs text-muted-foreground">Реальные данные с {SERVER_IP}</div>
         </div>
 
         <div className="grid md:grid-cols-4 gap-4">
           {[
-            { label: 'Онлайн', value: online, icon: 'Users', color: 'text-brand-sky', sub: 'из 1500 слотов' },
-            { label: 'Пинг', value: '12ms', icon: 'Zap', color: 'text-brand-cyan', sub: 'стабильно' },
-            { label: 'TPS', value: '20.0', icon: 'Activity', color: 'text-brand-blue', sub: 'идеально' },
-            { label: 'Аптайм', value: '99.8%', icon: 'Shield', color: 'text-brand-sky', sub: '30 дней' },
+            { label: 'Онлайн', value: online, icon: 'Users', color: 'text-brand-sky', sub: `из ${maxPlayers || '∞'} слотов` },
+            { label: 'Статус', value: isOnline ? 'ONLINE' : 'OFFLINE', icon: 'Zap', color: isOnline ? 'text-brand-cyan' : 'text-destructive', sub: isOnline ? 'работает' : 'перезапуск' },
+            { label: 'Версия', value: status?.version?.split(' ')[0] || '1.20+', icon: 'Activity', color: 'text-brand-blue', sub: 'Java Edition' },
+            { label: 'Режим', value: 'АНАРХИЯ', icon: 'Shield', color: 'text-brand-sky', sub: 'SMP + PvP' },
           ].map((s) => (
             <Card key={s.label} className="tilt-card border-border bg-card/50 backdrop-blur p-6">
               <div className="flex items-start justify-between mb-6">
                 <Icon name={s.icon} className={s.color} size={24} />
-                <span className="w-2 h-2 rounded-full bg-brand-sky animate-blink" />
+                <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-brand-sky animate-blink' : 'bg-destructive'}`} />
               </div>
               <div className="font-display font-black text-4xl mb-1">{s.value}</div>
               <div className="font-mono text-xs uppercase text-muted-foreground">{s.label}</div>
@@ -200,7 +181,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* SHOP */}
       <section id="shop" className="py-24 relative">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
@@ -214,34 +194,42 @@ const Index = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {PRIVILEGES.map((p, i) => (
-              <div key={p.name} className={`relative rounded-3xl p-[2px] tilt-card ${p.popular ? 'bg-gradient-to-br from-brand-sky via-brand-cyan to-brand-blue' : 'bg-border'}`}>
-                {p.popular && (
+            {privileges.map((p, i) => (
+              <div key={p.slug} className={`relative rounded-3xl p-[2px] tilt-card ${p.is_popular ? 'bg-gradient-to-br from-brand-sky via-brand-cyan to-brand-blue' : 'bg-border'}`}>
+                {p.is_popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-sky text-background font-display font-black text-xs px-4 py-1.5 rounded-full z-10">
                     ПОПУЛЯРНОЕ
                   </div>
                 )}
                 <div className="bg-card rounded-3xl p-6 h-full flex flex-col">
-                  <div className={`h-24 rounded-2xl bg-gradient-to-br ${p.color} mb-6 flex items-center justify-center relative overflow-hidden`}>
+                  <div className="h-24 rounded-2xl mb-6 flex items-center justify-center relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${p.color_from || '#38BDF8'}, ${p.color_to || '#2563EB'})` }}>
                     <div className="absolute inset-0 grid-bg opacity-30" />
                     <span className="font-display font-black text-2xl text-white drop-shadow-lg relative z-10">#{String(i + 1).padStart(2, '0')}</span>
                   </div>
-                  <div className={`font-display font-black text-2xl ${p.accent}`}>{p.name}</div>
-                  <div className="font-display font-black text-4xl mt-2 mb-6">{p.price}</div>
+                  <div className="font-display font-black text-2xl" style={{ color: p.color_from || '#38BDF8' }}>{p.name}</div>
+                  <div className="font-display font-black text-4xl mt-2 mb-6">{p.price}₽</div>
                   <ul className="space-y-2 flex-1 mb-6">
-                    {p.perks.map((perk) => (
+                    {p.features.slice(0, 5).map((perk) => (
                       <li key={perk} className="flex items-start gap-2 text-sm text-muted-foreground">
                         <Icon name="Check" size={16} className="text-brand-sky flex-shrink-0 mt-0.5" />
                         {perk}
                       </li>
                     ))}
                   </ul>
-                  <Button className={`w-full font-display font-bold ${p.popular ? 'bg-brand-sky text-background hover:bg-brand-sky/90' : 'bg-secondary hover:bg-secondary/80'}`}>
-                    Купить
+                  <Button onClick={() => buy(p)} className={`w-full font-display font-bold ${p.is_popular ? 'bg-brand-sky text-background hover:bg-brand-sky/90' : 'bg-secondary hover:bg-secondary/80'}`}>
+                    Купить за {p.price}₽
                   </Button>
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="text-center mt-10">
+            <Link to="/shop">
+              <Button size="lg" variant="outline" className="border-border h-12 font-display font-bold">
+                Все товары (кейсы и валюта) <Icon name="ArrowRight" size={16} className="ml-2" />
+              </Button>
+            </Link>
           </div>
 
           <div className="mt-12 grid md:grid-cols-3 gap-4 text-center">
@@ -260,7 +248,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* DOCS */}
       <section className="py-24 container mx-auto px-6">
         <div className="text-center mb-12">
           <div className="font-mono text-xs text-brand-sky mb-3">// 04 — LEGAL</div>
@@ -286,7 +273,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* SUPPORT */}
       <section id="support" className="py-24 container mx-auto px-6">
         <div className="rounded-3xl p-[2px] bg-gradient-to-br from-brand-sky via-brand-cyan to-brand-blue">
           <div className="bg-card rounded-3xl p-12 md:p-16 grid md:grid-cols-2 gap-8 items-center relative overflow-hidden">
@@ -298,15 +284,21 @@ const Index = () => {
                 Техническая поддержка работает круглосуточно. Отвечаем в среднем за 7 минут.
               </p>
               <div className="flex flex-wrap gap-3">
-                <Button className="bg-brand-sky text-background hover:bg-brand-sky/90 font-display font-bold h-12">
-                  <Icon name="Send" size={16} className="mr-2" /> Telegram
-                </Button>
-                <Button variant="outline" className="border-border h-12 font-display font-bold">
-                  <Icon name="MessageCircle" size={16} className="mr-2" /> Discord
-                </Button>
-                <Button variant="outline" className="border-border h-12 font-display font-bold">
-                  <Icon name="Mail" size={16} className="mr-2" /> Email
-                </Button>
+                <a href="https://t.me/mineshovel" target="_blank" rel="noopener noreferrer">
+                  <Button className="bg-brand-sky text-background hover:bg-brand-sky/90 font-display font-bold h-12">
+                    <Icon name="Send" size={16} className="mr-2" /> Telegram
+                  </Button>
+                </a>
+                <a href="https://discord.gg/mineshovel" target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" className="border-border h-12 font-display font-bold">
+                    <Icon name="MessageCircle" size={16} className="mr-2" /> Discord
+                  </Button>
+                </a>
+                <a href="mailto:support@mineshovel.ru">
+                  <Button variant="outline" className="border-border h-12 font-display font-bold">
+                    <Icon name="Mail" size={16} className="mr-2" /> Email
+                  </Button>
+                </a>
               </div>
             </div>
             <div className="relative grid grid-cols-2 gap-3">
@@ -326,6 +318,8 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      <BuyDialog product={selected} open={dialogOpen} onOpenChange={setDialogOpen} />
     </Layout>
   );
 };

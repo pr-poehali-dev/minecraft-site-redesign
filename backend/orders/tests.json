@@ -1,0 +1,22 @@
+{
+  "tests": [
+    {
+      "name": "Create order",
+      "method": "POST",
+      "path": "/",
+      "body": {"nickname": "Steve123", "product_slug": "dirt"},
+      "expectedStatus": 200,
+      "bodyMatcher": "partial",
+      "expectedBody": {"product_name": "DIRT"}
+    },
+    {
+      "name": "Invalid nickname",
+      "method": "POST",
+      "path": "/",
+      "body": {"nickname": "a", "product_slug": "dirt"},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial",
+      "expectedBody": {}
+    }
+  ]
+}
